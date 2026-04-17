@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>BJ Counter v3.0.1 | 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3498db">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="BJ Counter">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #f4f7f9; --primary: #2ecc71; --text: #2c3e50; 
+            --border: #e1e8ed; --danger: #e74c3c; --accent: #3498db;
+            --vh: 1vh;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background: var(--bg); color: var(--text); margin: 0;
+            display: flex; flex-direction: column; 
+            height: 100svh;
+            overflow: hidden; 
+        }
+        
+		.stat-est	{ 
+			font-size: 0.45em; 
+			color: #2563eb; 
+			display: block; 
+			font-weight: 500; 
+			margin-top: 1px; 
+					}
+					
+        .top-nav { background: white; flex-shrink: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        header { padding: 10px 15px; border-bottom: 1px solid #edf2f7; }
+        
+        .brand-area { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .brand-title { font-size: 1.1em; font-weight: 900; color: var(--accent); margin: 0; letter-spacing: 0.5px; }
+        
+        .top-actions { display: flex; gap: 4px; }
+        .btn-top { font-size: 0.6em; padding: 6px 8px; border-radius: 6px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; font-family: 'Roboto', sans-serif; }
+        .btn-reset { background: #ef4444; color: white; }
+        .btn-export-pdf { background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; }
+        .btn-export-csv { background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .stat-box { background: #fff; padding: 6px; text-align: center; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; }
+        .stat-box.active-filter { background: #fef3c7; border-color: #f59e0b; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .stat-val { font-size: 0.95em; font-weight: 700; display: block; color: #1e293b; }
+        .stat-label { font-size: 0.55em; color: #64748b; font-weight: 500; text-transform: uppercase; }
+
+        .filter-area { padding: 8px 15px; background: #fff; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px; }
+        .filter-sel { border-radius: 10px; border: 1px solid var(--border); background: #f8fafc; height: 34px; font-size: 0.7em; flex: 1; min-width: 80px; font-family: 'Roboto', sans-serif; font-weight: 500; color: #475569; padding-left: 5px; }
+
+        main { flex: 1; overflow-y: auto; overflow-x: hidden; background: #fff; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { background: #f8fafc; padding: 10px 8px; text-align: left; font-size: 0.7em; font-weight: 700; color: #64748b; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--border); text-transform: uppercase; }
+        td { padding: 14px 8px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        
+        .name-txt { font-weight: 700; display: block; font-size: 0.92em; color: #0f172a; line-height: 1.2; margin-bottom: 2px; }
+        .sub-info { font-size: 0.7em; color: #64748b; font-weight: 400; display: block; margin-top: 2px; }
+
+        .date-accent { display: inline-block; background: #f1f5f9; color: #475569; padding: 1px 6px; border-radius: 4px; font-weight: 700; border: 1px solid #e2e8f0; margin-right: 4px; }
+        .nom-txt { font-size: 1.0em; color: #64748b; font-weight: 400; }
+
+        .kitir-wrap { display: inline-flex; flex-direction: column; align-items: flex-start; }
+        .kitir-txt { font-family: 'Roboto Mono', monospace; font-size: 1.6em; font-weight: 900; line-height: 1; }
+        .kitir-aktif { color: var(--accent); }
+        .kitir-bjdpl { color: var(--danger); }
+        
+        .gol-badge { font-size: 0.55em; font-weight: 700; padding: 2px 6px; border-radius: 6px; margin-bottom: 4px; }
+        .gol-A { background: #dcfce7; color: #15803d; }
+        .gol-B { background: #e0f2fe; color: #0369a1; }
+        .gol-C { background: #fef3c7; color: #b45309; }
+        .gol-D { background: #fee2e2; color: #b91c1c; }
+        
+        .reading-now { background-color: #f0f9ff !important; box-shadow: inset 6px 0 0 var(--accent); }
+
+        footer { background: #fff; border-top: 2px solid var(--border); padding: 12px 15px calc(12px + env(safe-area-inset-bottom)) 15px; flex-shrink: 0; }
+        .settings-row { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 10px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #f1f5f9; }
+
+        .btn-play { background: var(--accent); color: white; border: none; width: 100%; font-size: 1.1em; height: 75px; border-radius: 166px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(52, 152, 219, 0.3); font-family: 'Roboto', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .btn-status { width: 44px; height: 44px; border: 1px solid var(--border); border-radius: 10px; background: white; font-weight: 700; font-size: 1.1em; transition: 0.2s; font-family: 'Roboto', sans-serif; }
+        .btn-ada.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-tidak.active { background: var(--danger); color: white; border-color: var(--danger); }
+
+        .source-badge { display: inline-block; font-size: 0.65em; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-top: 6px; text-transform: uppercase; }
+        .source-konven { background: #e0f2fe; color: #0369a1; }
+        .source-syariah { background: #dcfce7; color: #15803d; }
+
+        #uploadOverlay { position: fixed; inset: 0; background: white; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+        .upload-card { background: #f8fafc; border: 2px dashed #cbd5e1; padding: 15px; border-radius: 12px; margin-bottom: 12px; width: 100%; max-width: 350px; text-align: left; }
+        .upload-card label { display: block; font-weight: 900; font-size: 0.75em; color: #475569; margin-bottom: 8px; }
+        .btn-compile { padding: 18px; background: var(--accent); color: white; border: none; border-radius: 15px; width: 100%; max-width: 350px; font-weight: 700; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="uploadOverlay">
+    <h2 style="color:var(--accent); font-weight: 900; margin-bottom: 5px;">BJ Counter | © Hamdee</h2>
+    <div id="importArea" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        <div class="upload-card"><label>1. CSV KREDIT AKTIF (Mandatory)</label><input type="file" id="fileAktif" accept=".csv"></div>
+        <div class="upload-card"><label>2. CSV KREDIT BJDPL (Optional)</label><input type="file" id="fileBjdpl" accept=".csv"></div>
+        <button onclick="processFiles()" class="btn-compile">COMPILE</button>
+    </div>
+    <div id="restoreMsg" style="display:none; width:100%; max-width: 350px; margin-top:20px;">
+        <div id="restoreInfo" style="font-size:0.85em; margin-bottom:20px; color: #475569;"></div>
+        <button onclick="restoreSession()" style="padding:18px; background:var(--primary); color:white; border:none; border-radius:15px; width:100%; font-weight:700;">LANJUTKAN</button>
+        <p onclick="clearSession()" style="font-size:0.8em; color:#ef4444; margin-top:20px; cursor:pointer; font-weight: 700;">RESET DATA</p>
+    </div>
+</div>
+
+<div class="top-nav" id="topNav" style="display:none">
+    <header>
+        <div class="brand-area">
+            <div><h1 class="brand-title">BJ COUNTER</h1><span id="sourceBadge" class="source-badge"></span></div>
+            <div class="top-actions">
+                <button onclick="exportPDF()" class="btn-top btn-export-pdf">PDF</button>
+                <button onclick="exportCSV()" class="btn-top btn-export-csv">CSV</button>
+                <button onclick="confirmReset()" class="btn-top btn-reset">RESET</button>
+            </div>
+        </div>
+        <div class="stats-grid">
+            <div id="boxTotal" class="stat-box" onclick="setStatusFilter('ALL')"><span class="stat-val" id="sTotal">0</span><span class="stat-label">Total</span></div>
+            <div id="boxAda" class="stat-box" onclick="setStatusFilter('ADA')"><span class="stat-val" id="sAda" style="color:var(--primary)">0</span><span class="stat-label">Ada</span></div>
+            <div id="boxTidak" class="stat-box" onclick="setStatusFilter('TIDAK')"><span class="stat-val" id="sTidak" style="color:var(--danger)">0</span><span class="stat-label">Tidak</span></div>
+            <div id="boxBelum" class="stat-box" onclick="setStatusFilter('BELUM')">
+                <span class="stat-val" id="sBelum">0</span>
+                <span class="stat-label">Sisa</span>
+                <span id="sEstimasi" class="stat-est"></span>
+            </div>
+        </div>
+    </header>
+    <div class="filter-area">
+        <select id="selDbType" class="filter-sel" onchange="onDbTypeChange()" style="font-weight: 900; background: #e0f2fe;">
+            <option value="AKTIF">AKTIF</option><option value="BJDPL">BJDPL</option>
+        </select>
+        <select id="selPeriode" class="filter-sel" onchange="filterAndRender()" style="display:none; border-color: var(--danger);"></select>
+        <select id="selProduk" class="filter-sel" onchange="filterAndRender()"></select>
+        <select id="selGolongan" class="filter-sel" onchange="filterAndRender()">
+            <option value="ALL">Semua Gol</option><option value="A">Gol A</option><option value="B">Gol B</option><option value="C">Gol C</option><option value="D">Gol D</option>
+        </select>
+    </div>
+</div>
+
+<main id="appMain" style="display:none">
+    <table>
+        <thead>
+            <tr>
+                <th style="width:22%;">Kitir</th>
+                <th style="width:53%;">Detail BJ</th>
+                <th style="width:25%; text-align:center">Check</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</main>
+
+<footer id="appFooter" style="display:none">
+    <div class="settings-row">
+        <label style="display:flex; align-items:center; gap:6px; font-size:0.75em; font-weight:700;">
+            <input type="checkbox" id="chkShortMode"> SHORT
+        </label>
+        <input type="range" id="speedRange" min="0.5" max="3.0" step="0.1" value="1.0" style="flex:1" 
+       oninput="document.getElementById('spVal').innerText=this.value+'x'; updateEstimation();">
+        <span id="spVal" style="font-size:0.8em; font-family:monospace; font-weight:700; width:35px; color: var(--accent);">1.0x</span>
+        <select id="voiceSelector" style="max-width:100px; font-size:0.65em; height:30px;"></select>
+    </div>
+    <button id="btnToggle" class="btn-play" onclick="togglePlay()">▶ PLAY</button>
+</footer>
+
+<script>
+    let masterData = [];
+    let currentList = [];
+    let cursor = 0;
+    let isPlaying = false;
+    let csvSource = '';
+    let statusFilter = 'ALL';
+    const synth = window.speechSynthesis;
+
+    window.onload = () => {
+        if (localStorage.getItem('bj_data')) {
+            document.getElementById('restoreInfo').innerHTML = `Tersimpan <b>${JSON.parse(localStorage.getItem('bj_data')).length} data</b>.`;
+            document.getElementById('restoreMsg').style.display = 'block';
+            document.getElementById('importArea').style.display = 'none';
+        }
+        loadVoices();
+    };
+
+    function loadVoices() {
+        let v = synth.getVoices();
+        const sel = document.getElementById('voiceSelector');
+        if (!sel || v.length === 0) return;
+        sel.innerHTML = '';
+        v.filter(x => x.lang.includes('id')).forEach(x => {
+            const opt = document.createElement('option');
+            opt.textContent = x.name; opt.value = v.indexOf(x);
+            sel.appendChild(opt);
+        });
+    }
+    if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
+
+    async function processFiles() {
+        const fA = document.getElementById('fileAktif').files[0];
+        const fB = document.getElementById('fileBjdpl').files[0];
+        if (!fA) return alert("File AKTIF wajib!");
+
+        masterData = [];
+        await parseCSV(fA, 'AKTIF');
+        if (fB) await parseCSV(fB, 'BJDPL');
+
+        masterData.sort((a, b) => {
+            if (a.dbType !== b.dbType) return a.dbType === 'AKTIF' ? -1 : 1;
+            if (a.dbType === 'BJDPL') {
+                let dateA = a.tgl.split('-').reverse().join('');
+                let dateB = b.tgl.split('-').reverse().join('');
+                if (dateA !== dateB) return dateA.localeCompare(dateB);
+            }
+            return a.no.localeCompare(b.no, undefined, { numeric: true });
+        });
+
+        localStorage.setItem('bj_source', csvSource);
+        localStorage.setItem('bj_data', JSON.stringify(masterData));
+        initApp();
+    }
+
+    function parseCSV(file, type) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const lines = e.target.result.split(/\r?\n/);
+                if (lines.length > 1 && !csvSource) {
+                    csvSource = lines[1].split('|')[1]?.replace(/"/g, '').startsWith('6') ? 'SYARIAH' : 'KONVEN';
+                }
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split('|');
+                    const clean = (idx) => cols[idx]?.replace(/"/g, '').trim() || '';
+                    if (cols.length < 5) continue;
+
+                    let noK, nama, prod, tgl, nom;
+                    if (type === 'AKTIF') {
+                        noK = clean(1);
+                        if (csvSource === 'KONVEN') { nama = clean(3); prod = clean(4); tgl = clean(5); nom = clean(10); }
+                        else { nama = clean(5); prod = clean(6); tgl = clean(7); nom = clean(13); }
+                    } else {
+                        noK = clean(1);
+                        if (csvSource === 'KONVEN') { nama = clean(3); prod = clean(4); tgl = clean(7); nom = clean(10); }
+                        else { nama = clean(4); prod = clean(5); tgl = clean(8); nom = clean(11); }
+                    }
+
+                    if (noK) {
+                        const nVal = Math.trunc(parseFloat(nom.replace(/[^\d.-]/g, ''))) || 0;
+                        const period = tgl.split('-').slice(1).reverse().join('-');
+                        masterData.push({
+                            no: noK, nama: nama, produk: prod, tgl: tgl, periode: period,
+                            nomStr: new Intl.NumberFormat('en-US').format(nVal),
+                            gol: nVal <= 500000 ? 'A' : nVal <= 5000000 ? 'B' : nVal <= 20000000 ? 'C' : 'D',
+                            status: 'BELUM', digits: noK.slice(-5, -1), dbType: type
+                        });
+                    }
+                }
+                resolve();
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    function restoreSession() {
+        masterData = JSON.parse(localStorage.getItem('bj_data'));
+        csvSource = localStorage.getItem('bj_source') || 'KONVEN';
+        initApp();
+    }
+
+    function initApp() {
+        document.getElementById('uploadOverlay').style.display = 'none';
+        ['topNav', 'appMain', 'appFooter'].forEach(id => document.getElementById(id).style.display = 'block');
+        document.getElementById('sourceBadge').textContent = `${csvSource}`;
+        document.getElementById('sourceBadge').className = 'source-badge ' + (csvSource === 'SYARIAH' ? 'source-syariah' : 'source-konven');
+        onDbTypeChange();
+    }
+
+    function onDbTypeChange() {
+        const type = document.getElementById('selDbType').value;
+        const pSel = document.getElementById('selPeriode');
+        if (type === 'BJDPL') {
+            pSel.style.display = 'block';
+            const periods = [...new Set(masterData.filter(d => d.dbType === 'BJDPL').map(d => d.periode))].sort().reverse();
+            pSel.innerHTML = '<option value="ALL">Semua Periode</option>';
+            periods.forEach(p => pSel.innerHTML += `<option value="${p}">${p}</option>`);
+        } else { pSel.style.display = 'none'; }
+        const prodSel = document.getElementById('selProduk');
+        const prods = [...new Set(masterData.filter(d => d.dbType === type).map(d => d.produk))].sort();
+        prodSel.innerHTML = '<option value="ALL">Semua Produk</option>';
+        prods.forEach(p => prodSel.innerHTML += `<option value="${p}">${p}</option>`);
+        filterAndRender();
+    }
+
+    function setStatusFilter(st) { statusFilter = st; filterAndRender(); }
+
+    function filterAndRender() {
+        const type = document.getElementById('selDbType').value;
+        const period = document.getElementById('selPeriode').value;
+        const prod = document.getElementById('selProduk').value;
+        const gol = document.getElementById('selGolongan').value;
+        currentList = masterData.filter(d => {
+            return d.dbType === type &&
+                   (type === 'AKTIF' || period === 'ALL' || d.periode === period) &&
+                   (prod === 'ALL' || d.produk === prod) &&
+                   (gol === 'ALL' || d.gol === gol) &&
+                   (statusFilter === 'ALL' || d.status === statusFilter);
+        });
+        document.querySelectorAll('.stat-box').forEach(b => b.classList.remove('active-filter'));
+        document.getElementById({ ALL:'boxTotal', ADA:'boxAda', TIDAK:'boxTidak', BELUM:'boxBelum' }[statusFilter]).classList.add('active-filter');
+        cursor = 0; render(); updateStats();
+    }
+
+   function render() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+    const isBjdpl = document.getElementById('selDbType').value === 'BJDPL';
+
+    currentList.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        tr.id = `row-${idx}`;
+
+        // Perbaikan UI/UX: Kitir di kiri, Detail di tengah, Tombol di kanan
+        tr.innerHTML = `
+            <td>
+                <div class="kitir-wrap">
+                    <span class="gol-badge gol-${item.gol}">${item.gol}</span>
+                    <span class="kitir-txt ${isBjdpl ? 'kitir-bjdpl' : 'kitir-aktif'}">${item.digits}</span>
+                </div>
+            </td>
+            <td>
+                <span class="name-txt">${item.nama}</span>
+                <span class="sub-info">${item.no}</span>
+                <div class="sub-info">
+                    <span class="date-accent">${item.tgl}</span>
+                    <span>Rp ${item.nomStr}</span>
+                </div>
+            </td>
+            <td style="text-align:center">
+                <div style="display:flex; gap:6px; justify-content:center">
+                    <button id="btn-a-${idx}" class="btn-status btn-ada ${item.status==='ADA'?'active':''}" onclick="setStatus(${idx},'ADA')">✓</button>
+                    <button id="btn-t-${idx}" class="btn-status btn-tidak ${item.status==='TIDAK'?'active':''}" onclick="setStatus(${idx},'TIDAK')">✕</button>
+                </div>
+            </td>
+        `;
+
+        tr.onclick = (e) => {
+            if (e.target.tagName !== 'BUTTON' && !isPlaying) {
+                cursor = idx;
+                highlightRow(idx);
+            }
+        };
+
+        tbody.appendChild(tr);
+    });
+}
+   
+    function setStatus(idx, st) {
+        const item = currentList[idx];
+        const mIdx = masterData.findIndex(m => m.no === item.no && m.dbType === item.dbType);
+        if (mIdx !== -1) {
+            masterData[mIdx].status = st; currentList[idx].status = st;
+            localStorage.setItem('bj_data', JSON.stringify(masterData));
+            updateStats();
+            const btnA = document.getElementById(`btn-a-${idx}`);
+            const btnT = document.getElementById(`btn-t-${idx}`);
+            if(btnA) btnA.classList.toggle('active', st === 'ADA');
+            if(btnT) btnT.classList.toggle('active', st === 'TIDAK');
+        }
+    }
+
+function highlightRow(idx) {
+    document.querySelectorAll('tr').forEach(r => r.classList.remove('reading-now'));
+    const t = document.getElementById(`row-${idx}`);
+    if (t) {
+        t.classList.add('reading-now');
+        t.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+    function togglePlay() {
+        if (isPlaying) { isPlaying = false; synth.cancel(); document.getElementById('btnToggle').innerHTML = "▶ PLAY"; document.getElementById('btnToggle').style.background = 'var(--accent)'; }
+        else { isPlaying = true; document.getElementById('btnToggle').innerHTML = "⏸ PAUSE"; document.getElementById('btnToggle').style.background = '#e74c3c'; read(); }
+    }
+
+    function read() {
+        if (!isPlaying || cursor >= currentList.length) { if (cursor >= currentList.length) togglePlay(); return; }
+        highlightRow(cursor);
+        const item = currentList[cursor];
+        let text = item.digits;
+        if (document.getElementById('chkShortMode').checked && cursor > 0) {
+            if (item.digits.substring(0, 2) === currentList[cursor-1].digits.substring(0, 2)) text = item.digits.substring(2);
+        }
+        const utter = new SpeechSynthesisUtterance(text.split('').join(' '));
+        utter.voice = synth.getVoices()[document.getElementById('voiceSelector').value];
+        utter.rate = parseFloat(document.getElementById('speedRange').value);
+        utter.onend = () => { if (isPlaying) { if (currentList[cursor].status === 'BELUM') setStatus(cursor, 'ADA'); cursor++; read(); } };
+        synth.speak(utter);
+    }
+
+    function updateStats() {
+        document.getElementById('sTotal').innerText = currentList.length;
+        document.getElementById('sAda').innerText = currentList.filter(i => i.status === 'ADA').length;
+        document.getElementById('sTidak').innerText = currentList.filter(i => i.status === 'TIDAK').length;
+        document.getElementById('sBelum').innerText = currentList.filter(i => i.status === 'BELUM').length;
+		if (typeof updateEstimation === "function") updateEstimation();
+    }
+
+    function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4'); 
+        const now = new Date().toLocaleDateString('id-ID');
+		const today = new Date();
+		const dd = String(today.getDate()).padStart(2, '0');
+		const mm = String(today.getMonth() + 1).padStart(2, '0');
+		const yyyy = today.getFullYear();
+        const outlet = masterData.length > 0 ? masterData[0].no.substring(0, 5) : 'XXXXX';
+
+        doc.setFontSize(14); doc.text("BERITA ACARA PERHITUNGAN FISIK JAMINAN", 105, 15, { align: 'center' });
+        doc.setFontSize(9); doc.text(`OUTLET: ${outlet} | TANGGAL: ${now} | MODE: ${csvSource}`, 105, 22, { align: 'center' });
+
+        let pivot = {}; const dbTypes = ['AKTIF', 'BJDPL'];
+        dbTypes.forEach(db => {
+            pivot[db] = { products: {}, total: {A:0, B:0, C:0, D:0, row:0, ada:0, tidak:0, sisa:0} };
+            const sub = masterData.filter(m => m.dbType === db);
+            [...new Set(sub.map(m => m.produk))].sort().forEach(p => {
+                pivot[db].products[p] = {A:0, B:0, C:0, D:0, row:0, ada:0, tidak:0, sisa:0};
+                sub.filter(m => m.produk === p).forEach(m => {
+                    pivot[db].products[p][m.gol]++; pivot[db].products[p].row++;
+                    if(m.status==='ADA') pivot[db].products[p].ada++; else if(m.status==='TIDAK') pivot[db].products[p].tidak++; else pivot[db].products[p].sisa++;
+                    pivot[db].total[m.gol]++; pivot[db].total.row++;
+                    if(m.status==='ADA') pivot[db].total.ada++; else if(m.status==='TIDAK') pivot[db].total.tidak++; else pivot[db].total.sisa++;
+                });
+            });
+        });
+
+        let rows = []; let gt = {A:0, B:0, C:0, D:0, row:0, ada:0, tidak:0, sisa:0};
+        dbTypes.forEach(db => {
+            rows.push([{content: db, styles: {fontStyle: 'bold'}}, pivot[db].total.A, pivot[db].total.B, pivot[db].total.C, pivot[db].total.D, pivot[db].total.row, pivot[db].total.ada, pivot[db].total.tidak, pivot[db].total.sisa]);
+            for (let p in pivot[db].products) { 
+                let d = pivot[db].products[p]; 
+                rows.push(['   ' + p, d.A, d.B, d.C, d.D, d.row, d.ada, d.tidak, d.sisa]); 
+            }
+            for(let k in gt) gt[k] += pivot[db].total[k];
+        });
+        rows.push([{content: 'GRAND TOTAL', styles: {fontStyle: 'bold'}}, gt.A, gt.B, gt.C, gt.D, gt.row, gt.ada, gt.tidak, gt.sisa]);
+
+        doc.autoTable({ 
+            startY: 28, 
+            head: [['Produk / Golongan', 'A', 'B', 'C', 'D', 'Total', 'ADA', 'TIDAK', 'SISA']], 
+            body: rows, 
+            theme: 'grid', 
+            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [220, 220, 220], textColor: 0 }
+        });
+
+        let tidakAda = masterData.filter(m => m.status === 'TIDAK').map((m, idx) => [
+            idx + 1, m.nama.substring(0, 25), m.no, m.produk, m.dbType, m.tgl
+        ]);
+
+        doc.setFontSize(10);
+        doc.text("DAFTAR JAMINAN TIDAK DITEMUKAN (STATUS X):", 14, doc.lastAutoTable.finalY + 10);
+        
+        doc.autoTable({
+            startY: doc.lastAutoTable.finalY + 14,
+            head: [['No', 'Nama Nasabah', 'No. Kredit', 'Produk', 'DB', 'Tgl']],
+            body: tidakAda.length ? tidakAda : [['-', 'Semua jaminan ditemukan lengkap.', '-', '-', '-', '-']],
+            theme: 'grid',
+            styles: { fontSize: 7, cellPadding: 1.5 },
+            headStyles: { fillColor: [220, 220, 220], textColor: 0 }
+        });
+
+        let currY = doc.lastAutoTable.finalY + 10;
+        if (currY > 230) { doc.addPage(); currY = 20; }
+        
+        doc.setFontSize(9);
+        doc.text("CATATAN:", 14, currY);
+        doc.rect(14, currY + 2, 182, 35);
+
+        const signY = currY + 45;
+        doc.text(`${outlet}, ${now}`, 150, signY);
+        doc.text("Yang Melakukan Perhitungan BJ,", 150, signY + 5);
+        doc.text("__________________________", 150, signY + 25);
+
+        doc.addPage();
+        doc.setFontSize(11); doc.text("LAMPIRAN DATA", 105, 12, { align: 'center' });
+        
+        const items = masterData.map((m, i) => [
+            i + 1, m.dbType, m.nama.substring(0, 11), m.no, m.status === 'ADA' ? 'V' : m.status === 'TIDAK' ? 'X' : '-'
+        ]);
+
+        const rowsPerCol = 82; 
+        const totalPerPage = rowsPerCol * 3;
+
+        for (let i = 0; i < items.length; i += totalPerPage) {
+            if (i > 0) doc.addPage();
+            const pageData = items.slice(i, i + totalPerPage);
+            const col1 = pageData.slice(0, rowsPerCol);
+            const col2 = pageData.slice(rowsPerCol, rowsPerCol * 2);
+            const col3 = pageData.slice(rowsPerCol * 2, rowsPerCol * 3);
+
+            const tableConfigs = [
+                { data: col1, x: 14 }, { data: col2, x: 78 }, { data: col3, x: 142 }
+            ];
+
+            tableConfigs.forEach(cfg => {
+                if (cfg.data.length > 0) {
+                    doc.autoTable({
+                        startY: 18, margin: { left: cfg.x }, tableWidth: 60,
+                        head: [['No', 'Status', 'Nama', 'No. Kredit', 'Check']],
+                        body: cfg.data, theme: 'plain',
+                        styles: { fontSize: 5, cellPadding: 0.4, rowHeight: 3, lineWidth: 0.1, lineColor: [200, 200, 200] },
+                        headStyles: { fontStyle: 'bold', fillColor: [255, 255, 255], textColor: 0 },
+                        columnStyles: { 0: { cellWidth: 6 }, 1: { cellWidth: 12 }, 2: { cellWidth: 17 }, 3: { cellWidth: 20 }, 4: { cellWidth: 5 } }
+                    });
+                }
+            });
+        }
+        doc.save(`BA_Opname_BJ_${outlet}_${dd}${mm}${yyyy}.pdf`);
+    }
+
+    function exportCSV() {
+        let csv = "DATABASE|NOMOR KREDIT|NAMA|PRODUK|TANGGAL|PERIODE|GOL|NOMINAL|STATUS\n";
+        masterData.forEach(i => { csv += `${i.dbType}|${i.no}|${i.nama}|${i.produk}|${i.tgl}|${i.periode}|${i.gol}|${i.nomStr}|${i.status}\n`; });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Hasil_Opname_${new Date().getTime()}.csv`; a.click();
+    }
+
+    function confirmReset() { if (confirm("Hapus semua progress?")) clearSession(); }
+    function clearSession() { localStorage.clear(); location.reload(); }
+
+    function updateEstimation() {
+        const sisa = currentList.filter(i => i.status === 'BELUM').length;
+        const speed = parseFloat(document.getElementById('speedRange').value);
+        const estElem = document.getElementById('sEstimasi');
+        if (!estElem) return;
+        if (sisa === 0) { estElem.innerText = ""; return; }
+        const totalDetik = (sisa * 1.6) / speed;
+        const m = Math.floor(totalDetik / 60);
+        const s = Math.floor(totalDetik % 60);
+        estElem.innerText = `± ${m > 0 ? m + 'm ' : ''}${s}s`;
+    }
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .catch(err => console.log('SW registration failed:', err));
+        });
+    }
+
+    // LISTENER REMOTE BLUETOOTH
+    window.addEventListener('keydown', (e) => {
+        if (document.getElementById('appMain').style.display === 'none') return;
+
+        switch(e.key) {
+            case 'Enter': 
+            case ' ': 
+                e.preventDefault();
+                togglePlay();
+                break;
+            
+            case 'ArrowDown':
+            case 'PageDown':
+                e.preventDefault();
+                if (!isPlaying && cursor < currentList.length - 1) {
+                    cursor++;
+                    highlightRow(cursor);
+                }
+                break;
+
+            case 'ArrowUp':
+            case 'PageUp':
+                e.preventDefault();
+                if (!isPlaying && cursor > 0) {
+                    cursor--;
+                    highlightRow(cursor);
+                }
+                break;
+
+            case 'ArrowRight': // Tombol untuk "ADA" (V)
+                if (!isPlaying) {
+                    setStatus(cursor, 'ADA');
+                    if (cursor < currentList.length - 1) {
+                        cursor++;
+                        highlightRow(cursor);
+                    }
+                }
+                break;
+
+            case 'ArrowLeft': // Tombol untuk "TIDAK" (X)
+                if (!isPlaying) {
+                    setStatus(cursor, 'TIDAK');
+                    if (cursor < currentList.length - 1) {
+                        cursor++;
+                        highlightRow(cursor);
+                    }
+                }
+                break;
+        }
+    });
+
+</script>
+</body>
+</html>

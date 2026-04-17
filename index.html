@@ -669,7 +669,7 @@
       async function processFiles() {
         const fA = document.getElementById("fileAktif").files[0];
         const fB = document.getElementById("fileBjdpl").files[0];
-        if (!fA) return alert("File AKTIF wajib!");
+        if (!fA) return alert("Import file CSV Kredit Aktif dari Inquiry Kredit Passion!");
 
         masterData = [];
         await parseCSV(fA, "AKTIF");

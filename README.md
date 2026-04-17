@@ -13,3 +13,13 @@ Buka URL di browser Safari → ketuk ikon Share → **"Add to Home Screen"**
 - App bekerja **offline** setelah pertama kali dibuka (Service Worker cache)
 - Data sesi tersimpan di **localStorage** browser
 - Tidak ada data yang dikirim ke server
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=hamdee-vba%2Fbj-counter&type=date&legend=bottom-right">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=hamdee-vba/bj-counter&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=hamdee-vba/bj-counter&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=hamdee-vba/bj-counter&type=date&legend=top-left" />
+ </picture>
+</a>

@@ -197,20 +197,31 @@
     };
 
    function loadVoices() {
-        let v = synth.getVoices();
-        const sel = document.getElementById('voiceSelector');
-        if (!sel || v.length === 0) return;
-        sel.innerHTML = '';
+    let v = synth.getVoices();
+    const sel = document.getElementById('voiceSelector');
+    if (!sel || v.length === 0) return;
+    
+    sel.innerHTML = '';
+    let foundDefault = false;
+
+    v.forEach((x, index) => {
+        const opt = document.createElement('option');
         
-        // Langsung gunakan forEach tanpa di-filter
-        v.forEach(x => {
-            const opt = document.createElement('option');
-            // Menampilkan nama suara beserta kode bahasanya
-            opt.textContent = `${x.name} (${x.lang})`; 
-            opt.value = v.indexOf(x);
-            sel.appendChild(opt);
-        });
-    }
+        // Merapikan nama: Nama Suara + (Kode Bahasa) + (Offline/Online)
+        let type = x.localService ? "Offline" : "Online";
+        opt.textContent = `${x.name} (${x.lang}) - ${type}`; 
+        opt.value = index;
+
+        // LOGIKA DEFAULT:
+        // Jika belum ada yang terpilih, dan kita menemukan bahasa Indonesia ('id')
+        if (!foundDefault && x.lang.toLowerCase().includes('id')) {
+            opt.selected = true;
+            foundDefault = true; // Kunci agar hanya variasi Indonesia pertama yang jadi default
+        }
+
+        sel.appendChild(opt);
+    });
+}
 	
     if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bj-counter-v4';
+const CACHE_NAME = 'bj-counter-v5';
 const ASSETS = [
   '/bj-counter/',
   '/bj-counter/index.html',

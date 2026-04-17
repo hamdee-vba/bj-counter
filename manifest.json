@@ -3,7 +3,7 @@
   "short_name": "BJ Counter",
   "description": "Aplikasi perhitungan fisik jaminan kredit",
   "start_url": "index.html",
-  "scope": ".",
+  "scope": "/bj-counter/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f4f7f9",

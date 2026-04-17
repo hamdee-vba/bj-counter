@@ -1,9 +1,10 @@
 const CACHE_NAME = 'bj-counter-v4';
 const ASSETS = [
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  '/bj-counter/',
+  '/bj-counter/index.html',
+  '/bj-counter/manifest.json',
+  '/bj-counter/icon-192.png',
+  '/bj-counter/icon-512.png'
 ];
 
 // Install: cache local assets only (skip external CDN yang bisa gagal)

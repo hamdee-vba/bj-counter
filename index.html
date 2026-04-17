@@ -196,17 +196,22 @@
         loadVoices();
     };
 
-    function loadVoices() {
-        let v = synth.getVoices();
-        const sel = document.getElementById('voiceSelector');
-        if (!sel || v.length === 0) return;
-        sel.innerHTML = '';
-        v.filter(x => x.lang.includes('id')).forEach(x => {
-            const opt = document.createElement('option');
-            opt.textContent = x.name; opt.value = v.indexOf(x);
-            sel.appendChild(opt);
-        });
-    }
+   function loadVoices() {
+        let v = synth.getVoices();
+        const sel = document.getElementById('voiceSelector');
+        if (!sel || v.length === 0) return;
+        sel.innerHTML = '';
+        
+        // Langsung gunakan forEach tanpa di-filter
+        v.forEach(x => {
+            const opt = document.createElement('option');
+            // Menampilkan nama suara beserta kode bahasanya
+            opt.textContent = `${x.name} (${x.lang})`; 
+            opt.value = v.indexOf(x);
+            sel.appendChild(opt);
+        });
+    }
+	
     if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
 
     async function processFiles() {

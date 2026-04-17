@@ -2,7 +2,7 @@
   "name": "BJ Counter",
   "short_name": "BJ Counter",
   "description": "Aplikasi perhitungan fisik jaminan kredit",
-  "start_url": "index.html",
+  "start_url": "/bj-counter/index.html",
   "scope": "/bj-counter/",
   "display": "standalone",
   "orientation": "portrait",

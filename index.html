@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>BJ Counter v3</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&family=Roboto:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#3498db" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="BJ Counter" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="uploadOverlay">
+      <h2 style="color: var(--accent); font-weight: 900; margin-bottom: 5px">
+        BJ Counter
+        <span
+          id="appVersionLanding"
+          style="
+            font-size: 0.5em;
+            font-weight: 400;
+            vertical-align: middle;
+            opacity: 0.7;
+          "
+        ></span>
+      </h2>
+      <div
+        id="importArea"
+        style="
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        "
+      >
+        <div class="upload-card">
+          <label>1. CSV KREDIT AKTIF (Mandatory)</label
+          ><input type="file" id="fileAktif" accept=".csv" />
+        </div>
+        <div class="upload-card">
+          <label>2. CSV KREDIT BJDPL (Optional)</label
+          ><input type="file" id="fileBjdpl" accept=".csv" />
+        </div>
+        <button onclick="processFiles()" class="btn-compile">START</button>
+      </div>
+      <div
+        id="restoreMsg"
+        style="display: none; width: 100%; max-width: 350px; margin-top: 20px"
+      >
+        <div
+          id="restoreInfo"
+          style="font-size: 0.85em; margin-bottom: 20px; color: #475569"
+        ></div>
+        <button
+          onclick="restoreSession()"
+          style="
+            padding: 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            width: 100%;
+            font-weight: 700;
+          "
+        >
+          LANJUTKAN
+        </button>
+        <p
+          onclick="clearSession()"
+          style="
+            font-size: 0.8em;
+            color: #ef4444;
+            margin-top: 20px;
+            cursor: pointer;
+            font-weight: 700;
+          "
+        >
+          RESET DATA
+        </p>
+      </div>
+      <div
+        style="
+          margin-top: 30px;
+          font-size: 0.55em;
+          color: #94a3b8;
+          font-weight: 400;
+        "
+      >
+        ©Hamdee | 2026
+      </div>
+    </div>
+
+    <div class="top-nav" id="topNav" style="display: none">
+      <header>
+        <div class="brand-area">
+          <div>
+            <h1 class="brand-title">BJ COUNTER</h1>
+            <!-- Displays the application version in the UI; value is set dynamically via JavaScript -->
+            <!-- This span is used to display the source badge (e.g., data source or environment) dynamically via JavaScript -->
+            <span id="sourceBadge" class="source-badge"></span>
+          </div>
+          <div class="top-actions">
+            <button onclick="exportPDF()" class="btn-top btn-export-pdf">
+              PDF
+            </button>
+            <button onclick="exportCSV()" class="btn-top btn-export-csv">
+              CSV
+            </button>
+            <button onclick="confirmReset()" class="btn-top btn-reset">
+              RESET
+            </button>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div id="boxTotal" class="stat-box" onclick="setStatusFilter('ALL')">
+            <span class="stat-val" id="sTotal">0</span
+            ><span class="stat-label">Total</span>
+          </div>
+          <div id="boxAda" class="stat-box" onclick="setStatusFilter('ADA')">
+            <span class="stat-val" id="sAda" style="color: var(--primary)"
+              >0</span
+            ><span class="stat-label">Ada</span>
+          </div>
+          <div
+            id="boxTidak"
+            class="stat-box"
+            onclick="setStatusFilter('TIDAK')"
+          >
+            <span class="stat-val" id="sTidak" style="color: var(--danger)"
+              >0</span
+            ><span class="stat-label">Tidak</span>
+          </div>
+          <div
+            id="boxBelum"
+            class="stat-box"
+            onclick="setStatusFilter('BELUM')"
+          >
+            <span class="stat-val" id="sBelum">0</span>
+            <span class="stat-label">Sisa</span>
+            <span id="sEstimasi" class="stat-est"></span>
+          </div>
+        </div>
+      </header>
+      <div class="filter-area">
+        <div class="filter-main-row">
+          <select
+            id="selDbType"
+            class="filter-sel"
+            onchange="onDbTypeChange()"
+            style="font-weight: 900; background: #e0f2fe"
+          >
+            <option value="AKTIF">AKTIF</option>
+            <option value="BJDPL">BJDPL</option>
+          </select>
+          <select
+            id="selProduk"
+            class="filter-sel"
+            onchange="filterAndRender()"
+          ></select>
+          <select
+            id="selGolongan"
+            class="filter-sel"
+            onchange="filterAndRender()"
+          >
+            <option value="ALL">Semua Gol</option>
+            <option value="A">Gol A</option>
+            <option value="B">Gol B</option>
+            <option value="C">Gol C</option>
+            <option value="D">Gol D</option>
+          </select>
+          <button
+            id="btnToggleExtraFilters"
+            class="btn-filter-toggle"
+            onclick="toggleExtraFilters()"
+            title="Tampilkan/Sembunyikan Filter Tambahan"
+            aria-label="Toggle filter tambahan"
+          >
+            ▸
+          </button>
+        </div>
+        <div id="extraFilterWrap" class="extra-filter-wrap hidden">
+          <select
+            id="selPeriode"
+            class="filter-sel"
+            onchange="filterAndRender()"
+            style="display: none; border-color: var(--danger)"
+          ></select>
+          <select
+            id="selTahun"
+            class="filter-sel"
+            onchange="filterAndRender()"
+            style="display: none"
+          ></select>
+          <select
+            id="selBulan"
+            class="filter-sel"
+            onchange="filterAndRender()"
+            style="display: none"
+          ></select>
+        </div>
+      </div>
+    </div>
+
+    <main id="appMain" style="display: none">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 22%">Kitir</th>
+            <th style="width: 53%">Detail BJ</th>
+            <th style="width: 25%; text-align: center">Check</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </main>
+
+    <footer id="appFooter" style="display: none">
+      <div class="settings-row">
+        <label
+          style="
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75em;
+            font-weight: 700;
+          "
+        >
+          <input type="checkbox" id="chkShortMode" /> SHORT
+        </label>
+        <input
+          type="range"
+          id="speedRange"
+          min="0.5"
+          max="3.0"
+          step="0.1"
+          value="1.0"
+          style="flex: 1"
+          oninput="
+            document.getElementById('spVal').innerText = this.value + 'x';
+            updateEstimation();
+          "
+        />
+        <span
+          id="spVal"
+          style="
+            font-size: 0.8em;
+            font-family: monospace;
+            font-weight: 700;
+            width: 35px;
+            color: var(--accent);
+          "
+          >1.0x</span
+        >
+        <select
+          id="voiceSelector"
+          style="max-width: 100px; font-size: 0.65em; height: 30px"
+        ></select>
+      </div>
+      <button id="btnToggle" class="btn-play" onclick="togglePlay()">
+        ▶ PLAY
+      </button>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

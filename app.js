@@ -139,6 +139,157 @@ function loadVoices() {
 if (speechSynthesis.onvoiceschanged !== undefined)
   speechSynthesis.onvoiceschanged = loadVoices;
 
+// Voice Modal Functions
+let currentVoiceIndex = 0;
+
+function openVoiceModal() {
+  const modal = document.getElementById("voiceModal");
+  const loading = document.getElementById("voiceLoading");
+  const listContainer = document.getElementById("voiceListContainer");
+  const empty = document.getElementById("voiceEmpty");
+
+  modal.style.display = "flex";
+  loading.style.display = "block";
+  listContainer.style.display = "none";
+  empty.style.display = "none";
+
+  loadVoicesForModal();
+}
+
+function closeVoiceModal(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById("voiceModal").style.display = "none";
+}
+
+function refreshVoices() {
+  const loading = document.getElementById("voiceLoading");
+  const listContainer = document.getElementById("voiceListContainer");
+  const empty = document.getElementById("voiceEmpty");
+
+  loading.style.display = "block";
+  listContainer.style.display = "none";
+  empty.style.display = "none";
+
+  // Force reload voices
+  setTimeout(() => {
+    loadVoicesForModal();
+  }, 500);
+}
+
+function loadVoicesForModal() {
+  const loading = document.getElementById("voiceLoading");
+  const listContainer = document.getElementById("voiceListContainer");
+  const list = document.getElementById("voiceList");
+  const empty = document.getElementById("voiceEmpty");
+
+  let v = synth.getVoices();
+
+  // Retry if empty (Android fix)
+  if (v.length === 0) {
+    setTimeout(() => {
+      v = synth.getVoices();
+      if (v.length === 0) {
+        loading.style.display = "none";
+        empty.style.display = "block";
+      } else {
+        populateVoiceList(v);
+      }
+    }, 1000);
+    return;
+  }
+
+  populateVoiceList(v);
+}
+
+function populateVoiceList(voices) {
+  const loading = document.getElementById("voiceLoading");
+  const listContainer = document.getElementById("voiceListContainer");
+  const list = document.getElementById("voiceList");
+  const empty = document.getElementById("voiceEmpty");
+
+  const savedVoiceKey = localStorage.getItem(VOICE_STORAGE_KEY);
+
+  // Sort: Indonesian first
+  const sortedVoices = voices
+    .map((voice, index) => ({ voice, index }))
+    .sort((a, b) => {
+      const aIsId = (a.voice.lang || "").toLowerCase().startsWith("id");
+      const bIsId = (b.voice.lang || "").toLowerCase().startsWith("id");
+      if (aIsId !== bIsId) return aIsId ? -1 : 1;
+      return `${a.voice.lang}|${a.voice.name}`.localeCompare(
+        `${b.voice.lang}|${b.voice.name}`,
+      );
+    });
+
+  list.innerHTML = "";
+
+  sortedVoices.forEach(({ voice, index }) => {
+    const voiceKey = buildVoiceKey(voice);
+    const isSelected = voiceKey === savedVoiceKey;
+    const isId = (voice.lang || "").toLowerCase().startsWith("id");
+    const mode = voice.localService ? "Offline" : "Online";
+
+    const item = document.createElement("div");
+    item.innerHTML = `
+      <div
+        onclick="selectVoice(${index}, '${voiceKey.replace(/'/g, "\\'")}')"
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px;
+          border-radius: 10px;
+          border: 1px solid ${isSelected ? "var(--accent)" : "var(--border)"};
+          background: ${isSelected ? "#f0f9ff" : "#f8fafc"};
+          cursor: pointer;
+          transition: 0.2s;
+        "
+        onmouseover="this.style.background='${isSelected ? "#e0f2fe" : "#f1f5f9"}'"
+        onmouseout="this.style.background='${isSelected ? "#f0f9ff" : "#f8fafc"}'"
+      >
+        <div>
+          <div style="font-weight: 600; font-size: 0.9em; color: #1e293b">
+            ${isId ? "🇮🇩 " : "🌐 "}${voice.name}
+          </div>
+          <div style="font-size: 0.75em; color: #64748b">
+            ${voice.lang?.toUpperCase() || "UNK"} • ${mode}
+          </div>
+        </div>
+        <div style="color: ${isSelected ? "var(--accent)" : "#cbd5e1"}">
+          ${isSelected ? "✓" : "○"}
+        </div>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+
+  loading.style.display = "none";
+  listContainer.style.display = "block";
+}
+
+function selectVoice(index, voiceKey) {
+  localStorage.setItem(VOICE_STORAGE_KEY, voiceKey);
+  currentVoiceIndex = index;
+
+  // Update button text
+  const voices = synth.getVoices();
+  const selectedVoice = voices.find((v) => buildVoiceKey(v) === voiceKey);
+  if (selectedVoice) {
+    const btnText = document.getElementById("voiceBtnText");
+    const btnIcon = document.getElementById("voiceBtnIcon");
+    const isId = (selectedVoice.lang || "").toLowerCase().startsWith("id");
+    btnIcon.textContent = isId ? "🇮🇩" : "🌐";
+    btnText.textContent =
+      selectedVoice.name.length > 12
+        ? selectedVoice.name.substring(0, 12) + "..."
+        : selectedVoice.name;
+  }
+
+  // Refresh list to show selection
+  loadVoicesForModal();
+  closeVoiceModal();
+}
+
 async function processFiles() {
   const fA = document.getElementById("fileAktif").files[0];
   const fB = document.getElementById("fileBjdpl").files[0];
@@ -514,8 +665,16 @@ function read() {
       text = item.digits.substring(2);
   }
   const utter = new SpeechSynthesisUtterance(text.split("").join(" "));
-  utter.voice =
-    synth.getVoices()[document.getElementById("voiceSelector").value];
+  // Get voice from saved preference
+  const savedVoiceKey = localStorage.getItem(VOICE_STORAGE_KEY);
+  const voices = synth.getVoices();
+  if (savedVoiceKey) {
+    utter.voice =
+      voices.find((v) => buildVoiceKey(v) === savedVoiceKey) || null;
+  }
+  if (!utter.voice && voices.length > 0) {
+    utter.voice = voices[0];
+  }
   utter.rate = parseFloat(document.getElementById("speedRange").value);
   utter.onend = () => {
     if (isPlaying) {

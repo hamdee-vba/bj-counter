@@ -7,6 +7,7 @@ let csvSource = "";
 let statusFilter = "ALL";
 const synth = window.speechSynthesis;
 const VOICE_STORAGE_KEY = "bj_voice_pref";
+const READ_NAME_STORAGE_KEY = "bj_read_name_pref";
 let outletData = []; // Data outlet dari tabel_outlet.json
 
 // Load outlet data from JSON file
@@ -27,6 +28,17 @@ window.onload = () => {
     document.getElementById("restoreMsg").style.display = "block";
     document.getElementById("importArea").style.display = "none";
   }
+
+  // Initialize chkReadName based on localStorage
+  const chkReadName = document.getElementById("chkReadName");
+  if (chkReadName) {
+    chkReadName.checked =
+      localStorage.getItem(READ_NAME_STORAGE_KEY) === "true";
+    chkReadName.addEventListener("change", () => {
+      localStorage.setItem(READ_NAME_STORAGE_KEY, chkReadName.checked);
+    });
+  }
+
   const voiceSel = document.getElementById("voiceSelector");
   if (voiceSel) {
     voiceSel.addEventListener("focus", () => {
@@ -664,7 +676,26 @@ function read() {
     )
       text = item.digits.substring(2);
   }
-  const utter = new SpeechSynthesisUtterance(text.split("").join(" "));
+
+  // Proses pembacaan: nomor per digit, nama per kata
+  // Gunakan variabel 'text' yang sudah diproses logika SHORT mode
+  let utterText = "";
+
+  // Baca nomor per digit (misal: "123" -> "1 2 3")
+  const digitsOnly = text.replace(/\D/g, "");
+  if (digitsOnly) {
+    utterText = digitsOnly.split("").join(" ");
+  }
+
+  // Tambahkan nama (baca sebagai kata utuh, bukan per karakter)
+  if (document.getElementById("chkReadName").checked) {
+    const cleanedName = getCleanedCustomerName(item.nama);
+    if (cleanedName) {
+      utterText += ` ${cleanedName}`;
+    }
+  }
+
+  const utter = new SpeechSynthesisUtterance(utterText);
   // Get voice from saved preference
   const savedVoiceKey = localStorage.getItem(VOICE_STORAGE_KEY);
   const voices = synth.getVoices();
@@ -984,6 +1015,23 @@ if ("serviceWorker" in navigator) {
 }
 
 // LISTENER REMOTE BLUETOOTH
+function getCleanedCustomerName(name) {
+  // 1. Hilangkan semua tanda baca lalu trim
+  let cleaned = name.replace(/[^\p{L}\p{N}\s]/gu, "").trim(); // Mendukung karakter Unicode
+  if (!cleaned) return "";
+
+  const words = cleaned.split(/\s+/);
+  if (words.length === 0) return "";
+
+  // 2. Jika nama nasabah lebih dari 1 kata, baca hanya kata pertama
+  // 3. Jika kata pertama kurang dari 3 huruf, baca kata selanjutnya
+  let nameToRead = words[0];
+  if (words.length > 1 && words[0].length < 3) {
+    nameToRead = words[1];
+  }
+  return nameToRead;
+}
+
 window.addEventListener("keydown", (e) => {
   if (document.getElementById("appMain").style.display === "none") return;
 

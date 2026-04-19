@@ -227,19 +227,34 @@
       </table>
     </main>
 
-    <footer id="appFooter" style="display: none">
-      <div class="settings-row">
+    <footer id="appFooter" style="display: none; padding: 8px 12px 12px">
+      <!-- Baris 1: Checkboxes -->
+      <div class="settings-row" style="margin-bottom: 8px">
         <label
           style="
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 0.75em;
+            gap: 4px;
+            font-size: 0.7em;
             font-weight: 700;
           "
         >
           <input type="checkbox" id="chkShortMode" /> SHORT
         </label>
+        <label
+          style="
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.7em;
+            font-weight: 700;
+          "
+        >
+          <input type="checkbox" id="chkReadName" /> BACA NAMA
+        </label>
+      </div>
+      <!-- Baris 2: Slider, Speed, Voice -->
+      <div class="settings-row">
         <input
           type="range"
           id="speedRange"
@@ -256,10 +271,10 @@
         <span
           id="spVal"
           style="
-            font-size: 0.8em;
+            font-size: 0.75em;
             font-family: monospace;
             font-weight: 700;
-            width: 35px;
+            width: 32px;
             color: var(--accent);
           "
           >1.0x</span
@@ -270,20 +285,20 @@
           style="
             display: flex;
             align-items: center;
-            gap: 4px;
-            padding: 6px 10px;
-            border-radius: 8px;
+            gap: 3px;
+            padding: 4px 8px;
+            border-radius: 6px;
             border: 1px solid var(--border);
             background: #f8fafc;
-            font-size: 0.65em;
+            font-size: 0.6em;
             font-weight: 500;
             color: #475569;
             cursor: pointer;
-            height: 30px;
+            height: 26px;
           "
         >
           <span id="voiceBtnIcon">🔊</span>
-          <span id="voiceBtnText">Pilih Suara</span>
+          <span id="voiceBtnText">Suara</span>
         </button>
       </div>
       <button id="btnToggle" class="btn-play" onclick="togglePlay()">
@@ -407,6 +422,14 @@
       </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- 
+      Urutan script penting untuk dependency:
+      1. data-manager.js - State & data processing (dasar)
+      2. voice-engine.js - Audio/TTS (depends on data-manager)
+      3. ui-controller.js - UI & events (depends on both)
+    -->
+    <script src="data-manager.js"></script>
+    <script src="voice-engine.js"></script>
+    <script src="ui-controller.js"></script>
   </body>
 </html>

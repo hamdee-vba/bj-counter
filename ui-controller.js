@@ -4,7 +4,7 @@
  */
 
 // ==================== APP VERSION ====================
-const APP_VERSION = "v3.0.3";
+const APP_VERSION = "v3.0.40";
 
 // ==================== WINDOW ONLOAD ====================
 window.onload = () => {

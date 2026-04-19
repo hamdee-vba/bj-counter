@@ -234,7 +234,9 @@ window.getCleanedCustomerName = function (name) {
   if (words.length > 1 && words[0].length < 3) {
     nameToRead = words[1];
   }
-  return nameToRead;
+
+  // 4. Convert ke lowercase agar TTS membaca sebagai kata, bukan singkatan
+  return nameToRead.toLowerCase();
 };
 
 // ==================== EXPORT FUNCTIONS ====================

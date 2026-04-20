@@ -325,7 +325,7 @@ window.read = function () {
   utter.rate = parseFloat(document.getElementById("speedRange").value);
 
   // Set bahasa Indonesia agar TTS membaca dengan benar
-  utter.lang = 'id-ID';
+  utter.lang = "id-ID";
 
   // Event: setelah selesai bicara, lanjut ke item berikutnya
   utter.onend = () => {

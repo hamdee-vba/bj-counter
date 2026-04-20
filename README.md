@@ -1,6 +1,6 @@
 # BJ Counter PWA (Dev)
 
-Aplikasi perhitungan fisik jaminan kredit — versi Progressive Web App  
+Aplikasi perhitungan barang jaminan KCA — versi Progressive Web App  
 URL: https://hamdee-vba.github.io/bj-counter  
 
 **# Install di Android:**
